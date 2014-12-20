@@ -1,24 +1,25 @@
 遊戲簡介：
 
-本遊戲要求玩家在10秒內摧毀7個子塊組成的標靶，整個遊戲介面由大炮，擋板，和標靶組成，通過點觸螢幕可以使大炮進行瞄準，雙擊發射炮彈，碰到擋板遊戲時間減少，集中目標會增加遊戲時間，當遊戲時間減至0時結束遊戲
+本遊戲要求玩家在10秒內摧毀7個子塊組成的標靶，整個遊戲界面由大炮，擋板，和標靶組成，通過點觸螢幕可以使大炮進行瞄準，雙擊發射炮彈，碰到擋板遊戲時間減少，擊中目標會增加遊戲時間，當遊戲時間減至0時結束遊戲
 
 工程結構：
 
 這個應用由三個類組成：
 
 1）Line：使兩個點成為一個組，使用該類來定義擋板和靶子，blocker = new Line()，target = new Line();
-2）CannonView是自己擴展自SurfaceView的子類實現了SurfaceHolder.Callback介面，該介面包含了三個事件：
+
+2）CannonGame是應用的主Activity，主要用來處理雙擊事件（onTouchEvent(MotionEvent event)，和cannonView.alignCannon(event);）和主Activity的onCreate，onPause（調用cannonView.stopGame()），onDestroy（ cannonView.releaseResources()）
+
+3）CannonView是自己擴展自SurfaceView的子類實現了SurfaceHolder.Callback介面，該介面包含了三個事件：
  surfaceCreated，surfaceChanged（該方法體為空，因為此應用中一直以縱向視圖顯示，不會調用該方法）和surfaceDestroyed（調用cannonThread.join()）
 
-->構造函數CannonView(Context context, AttributeSet attrs)用來初始化擋板，靶子和大炮，初始化聲音檔
+->構造函數CannonView(Context context, AttributeSet attrs)用來初始化擋板，靶子和大炮，初始化聲音等
 
 ->onSizeChanged(int w, int h, int oldw, int oldh)初次加載時調用，完成繪圖，並調用newGame函數；
 
-->newGame（）重置所有的介面並且啟動的新的線程Cannon Thread啟動新遊戲
+->newGame（）重置所有的界面並且啟動的新的線程Cannon Thread來啟動新遊戲
 
--> updatePositions(double elapsedTimeMS)由Cannon Thread調用，由遊戲運行的時間來跟新下一時刻個元素的位置，並執行簡單的衝突檢驗，判斷小球是否與擋板接觸，如果衝突了，則小球方向變反，剩餘時間
-減少，並播放擊中擋板的聲音；如果，小球碰到了左右,上下邊界則cannonballOnScreen=false;
-之後，進行小球和target的衝突檢驗，如果碰到目標，判斷擊中了哪一塊，剩餘時間增加，cannonballOnScreen=false;如果擊中的已經是最後一塊了，遊戲結束
+-> updatePositions(double elapsedTimeMS)由Cannon Thread調用，由遊戲運行的時間來跟新下一時刻個元素的位置，並執行簡單的衝突檢驗，判斷小球是否與擋板接觸，如果衝突了，則小球方向變反，剩餘時間減少，並播放擊中擋板的聲音；如果，小球碰到了左右,上下邊界則cannonballOnScreen=false;之後，進行小球和target的衝突檢驗，如果碰到目標，判斷擊中了哪一塊，剩餘時間增加，cannonballOnScreen=false;如果擊中的已經是最後一塊了，遊戲結束
 
 -> alignCannon(MotionEvent event)將炮口對準手指按下的位置，並返回其與水平線的夾角
 
@@ -26,10 +27,9 @@
 
 ->drawGameElements(Canvas canvas)繪製螢幕，有CannonThread調用，canvas是CannonThread從surfaceView的SurfaceHolder中獲得的
 
-->showGameOverDialog(int messageId),遊戲結束時調用，為button設置點擊事件調用newGame（），因為對話框必須在GUI線程中顯示，所以
+->showGameOverDialog(int messageId),遊戲結束時調用，為button設置點擊事件調用newGame，因為對話框必須在GUI線程中顯示，所以
 activity.runOnUiThread
 
-3）CannonGame是應用的主Activity，主要用來處理雙擊事件（onTouchEvent(MotionEvent event)，和cannonView.alignCannon(event);）和主Activity的onCreate，onPause（調用cannonView.stopGame()），onDestroy（ cannonView.releaseResources()）
 
 技術概覽：
 
@@ -40,7 +40,7 @@ activity.runOnUiThread
 dialogBuilder.setMessage(getResources().getString( R.string.results_format, shotsFired, totalElapsedTime));
 
 
-二.介面佈局一直是豎向的
+二.界面佈局一直是豎向的
 android:screenOrientation="portrait"//介面佈局一直是豎向的
 
 
