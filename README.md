@@ -5,6 +5,7 @@
 工程結構：
 
 這個應用由三個類組成：
+
 1）Line：使兩個點成為一個組，使用該類來定義擋板和靶子，blocker = new Line()，target = new Line();
 2）CannonView是自己擴展自SurfaceView的子類實現了SurfaceHolder.Callback介面，該介面包含了三個事件：
  surfaceCreated，surfaceChanged（該方法體為空，因為此應用中一直以縱向視圖顯示，不會調用該方法）和surfaceDestroyed（調用cannonThread.join()）
@@ -26,25 +27,17 @@
 ->drawGameElements(Canvas canvas)繪製螢幕，有CannonThread調用，canvas是CannonThread從surfaceView的SurfaceHolder中獲得的
 
 ->showGameOverDialog(int messageId),遊戲結束時調用，為button設置點擊事件調用newGame（），因為對話框必須在GUI線程中顯示，所以
-activity.runOnUiThread(
-         new Runnable() {
-            public void run()
-            {
-               dialogIsDisplayed = true;
-               dialogBuilder.show(); // display the dialog
-            }
+activity.runOnUiThread
 
 3）CannonGame是應用的主Activity，主要用來處理雙擊事件（onTouchEvent(MotionEvent event)，和cannonView.alignCannon(event);）和主Activity的onCreate，onPause（調用cannonView.stopGame()），onDestroy（ cannonView.releaseResources()）
 
 技術概覽：
 
 一.string.xml中的格式化資源
-<string name="results_format">
-      Shots fired: %1$d\nTotal time: %2$.1f</string>
+<string name="results_format"> Shots fired: %1$d\nTotal time: %2$.1f</string>
 
 調用：
- dialogBuilder.setMessage(getResources().getString(
-         R.string.results_format, shotsFired, totalElapsedTime));
+dialogBuilder.setMessage(getResources().getString( R.string.results_format, shotsFired, totalElapsedTime));
 
 
 二.介面佈局一直是豎向的
@@ -53,45 +46,30 @@ android:screenOrientation="portrait"//介面佈局一直是豎向的
 
 三.將自定義的佈局和佈局（main.xml綁定）
 1）需要使用完全限定類名：
-<com.tonychiang.cannonshoot.CannonView
-..../> 
+<com.tonychiang.cannonshoot.CannonView/>
 
 
 四.使用soundpool和audiomanager播放聲音：
 soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
 第一個參數表示一次課播放的最大同步聲音流數量，這裏一次只播放一個聲音，所以設置為1，第二個參數表示制定那種流進行播放，一共有7個，google推薦在遊戲中使用AudioManager.STREAM_MUSIC
 
-// create Map of sounds and pre-load sounds
-      soundMap = new HashMap<Integer, Integer>(); // create new HashMap
-      soundMap.put(TARGET_SOUND_ID,
-         soundPool.load(context, R.raw.target_hit, 1));
 
 播放：
- // play blocker sound
-            soundPool.play(soundMap.get(BLOCKER_SOUND_ID), 1, 1, 1, 0, 1f);
+soundPool.play(soundMap.get(BLOCKER_SOUND_ID), 1, 1, 1, 0, 1f);
 
 // allow volume keys to set game volume
-      setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-public final int play (int soundID, float leftVolume, float rightVolume, int priority, int loop, float rate)
-Parameters
-soundID	a soundID returned by the load() function
-leftVolume	left volume value (range = 0.0 to 1.0)
-rightVolume	right volume value (range = 0.0 to 1.0)
-priority	stream priority (0 = lowest priority)
-loop	loop mode (0 = no loop, -1 = loop forever)
-rate	playback rate (1.0 = normal playback, range 0.5 to 2.0)
+setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
 ->MediaPlay和soundpool的區別：
 使用MediaPlayer來播放音頻檔存在一些不足:
 例如：資源佔用量較高、延遲時間較長、不支持多個音頻同時播放等。
 
- 相對於使用SoundPool存在的一些問題:
-1. SoundPool最大只能申請1M的記憶體空間，這就意味著我們只能使用一些很短的聲音片段，而不是用它來播放歌曲或者遊戲背景音樂（背景音樂可以考慮使用JetPlayer來播放）。 
+相對於使用SoundPool存在的一些問題:
+1. SoundPool最大只能申請1M的記憶體空間，這就意味著我們只能使用一些很短的聲音片段，而不是用它來播放歌曲或者遊戲背景音樂（背景音樂可以考慮使用JetPlayer來播放）
 2. SoundPool提供了pause和stop方法，但這些方法建議最好不要輕易使用，因為有些時候它們可能會使你的程式莫名其妙的終止。還有些朋友反映它們不會立即中止播放聲音，而是把緩衝區裏的數據播放完才會停下來，也許會多播放一秒鐘。 
 
 
-五Cannon Game類的Activity的生命週期OnPause和OnDestory
+五.Cannon Game類的Activity的生命週期OnPause和OnDestory
 
 1）Cannon Game類是遊戲的主Activity類
 2）custom view to display the game：private CannonView cannonView; 
@@ -100,67 +78,19 @@ rate	playback rate (1.0 = normal playback, range 0.5 to 2.0)
 
 六.重寫Cannon Game類的Activity的onTouchEvent方法
 
-public boolean onTouchEvent(MotionEvent event)
-   {
-      int action = event.getAction();
-      if (action == MotionEvent.ACTION_DOWN ||
-         action == MotionEvent.ACTION_MOVE)
-      {
-         cannonView.alignCannon(event); 
-      } 
 //檢查是否為雙擊事件
-      return gestureDetector.onTouchEvent(event);
+return gestureDetector.onTouchEvent(event);
 
 
 七.利用GestureDetector和SimpleOnGestureListener處理雙擊事件
 
 現在Cannon Game類的onCreate方法中初始化 GestureDetector
-      gestureDetector = new GestureDetector(this, gestureListener);
-
-之後：
-   SimpleOnGestureListener gestureListener = new SimpleOnGestureListener(){
-      @Override
-      public boolean onDoubleTap(MotionEvent e)
-      {
-         cannonView.fireCannonball(e); 
-         return true;}
- }
-
+ gestureDetector = new GestureDetector(this, gestureListener);
 
 八.CannonThread實現遊戲迴圈（多線程同步）：
 
 因為一次只能有一個線程訪問surfaceview，所以要枷鎖
-public void run()
-      {
-         Canvas canvas = null; // used for drawing
-         long previousFrameTime = System.currentTimeMillis(); 
-        
-         while (threadIsRunning)
-         {
-            try
-            {
-               canvas = surfaceHolder.lockCanvas(null);               
-               
-               // lock the surfaceHolder for drawing
-               synchronized(surfaceHolder)
-               {
-                  long currentTime = System.currentTimeMillis();
-                  double elapsedTimeMS = currentTime - previousFrameTime;
-                  totalElapsedTime += elapsedTimeMS / 1000.00; 
-                  updatePositions(elapsedTimeMS); // update game state
-                  drawGameElements(canvas); // draw 
-                  previousFrameTime = currentTime; // update previous time
-               } 
-            } 
-            finally
-            {
-               if (canvas != null) 
-                  surfaceHolder.unlockCanvasAndPost(canvas);
-            }
-         } 
-      } 
-   }
-} 
+
 
 2）surfaceDestroyed（調用cannonThread.join()）
 
@@ -181,27 +111,11 @@ Tips：
 
 android:screenOrientation="portrait"//介面佈局一直是豎向的
 
-2） 資源中帶有變數的strings.xml：
-
- 其中，%表示後面是變數，如果只有一個變數，則直接用%d或%.1f即可，多個變數，需要在中間加1$和2$來區分。
-
-<string name="results_format">
-      Shots fired: %1$d\nTotal time: %2$.1f</string>
-
-<string name="time_remaining_format">
-      Time remaining: %.1f seconds</string>
-
-// display number of shots fired and total time elapsed
-      dialogBuilder.setMessage(getResources().getString(
-         R.string.results_format, shotsFired, totalElapsedTime));
-
- 3）
-
 // initialize the GestureDetector，通過gestureListener來監聽手勢變化
-      gestureDetector = new GestureDetector(this, gestureListener);
+ gestureDetector = new GestureDetector(this, gestureListener);
 
 // 允許設備音量鍵控制聲音
-      setVolumeControlStream(AudioManager.STREAM_MUSIC);
+ setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
 4）
 
@@ -212,16 +126,3 @@ soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
 
 paint.setAntiAlias(ture)//抗鋸齒，是圖形平滑
 cannonPaint.setStrokeWidth(lineWidth * 1.5f);//設置線寬
-
-6）
-
-//http://www.2cto.com/kf/201302/190591.html 
-activity.runOnUiThread(
-         new Runnable() {
-            public void run()
-            {
-               dialogIsDisplayed = true;
-               dialogBuilder.show(); // display the dialog
-            } // end method run
-         } // end Runnable
-      ); // end call to runOnUiThread
