@@ -1,5 +1,3 @@
-// CannonView.java
-// Displays the Cannon Game
 package com.tonychiang.cannonshoot;
 
 import java.util.HashMap;
@@ -31,88 +29,77 @@ public class CannonView extends SurfaceView
    private Activity activity; // to display Game Over dialog in GUI thread
    private boolean dialogIsDisplayed = false;   
                
-   // constants for game play
-   public static final int TARGET_PIECES = 7; // sections in the target
-   public static final int MISS_PENALTY = 2; // seconds deducted on a miss
-   public static final int HIT_REWARD = 3; // seconds added on a hit
+   public static final int TARGET_PIECES = 7; 
+   public static final int MISS_PENALTY = 2; 
+   public static final int HIT_REWARD = 3; 
 
-   // variables for the game loop and tracking statistics
-   private boolean gameOver; // is the game over?
-   private double timeLeft; // the amount of time left in seconds
-   private int shotsFired; // the number of shots the user has fired
-   private double totalElapsedTime; // the number of seconds elapsed
+   private boolean gameOver; 
+   private double timeLeft; 
+   private int shotsFired; 
+   private double totalElapsedTime; 
 
-   // variables for the blocker and target
-   private Line blocker; // start and end points of the blocker
+   private Line blocker; 
    private int blockerDistance; // blocker distance from left
    private int blockerBeginning; // blocker distance from top
    private int blockerEnd; // blocker bottom edge distance from top
-   private int initialBlockerVelocity; // initial blocker speed multiplier
-   private float blockerVelocity; // blocker speed multiplier during game
+   private int initialBlockerVelocity; 
+   private float blockerVelocity;
 
-   private Line target; // start and end points of the target
+   private Line target; 
    private int targetDistance; // target distance from left
    private int targetBeginning; // target distance from top
-   private double pieceLength; // length of a target piece
+   private double pieceLength; 
    private int targetEnd; // target bottom's distance from top
-   private int initialTargetVelocity; // initial target speed multiplier
-   private float targetVelocity; // target speed multiplier during game
+   private int initialTargetVelocity; 
+   private float targetVelocity; 
 
-   private int lineWidth; // width of the target and blocker
-   private boolean[] hitStates; // is each target piece hit?
-   private int targetPiecesHit; // number of target pieces hit (out of 7)
+   private int lineWidth; 
+   private boolean[] hitStates; 
+   private int targetPiecesHit; 
 
-   // variables for the cannon and cannonball
-   private Point cannonball; // cannonball image's upper-left corner
-   private int cannonballVelocityX; // cannonball's x velocity
-   private int cannonballVelocityY; // cannonball's y velocity
-   private boolean cannonballOnScreen; // is the cannonball on the screen
-   private int cannonballRadius; // cannonball radius
-   private int cannonballSpeed; // cannonball speed
-   private int cannonBaseRadius; // cannon base radius
-   private int cannonLength; // cannon barrel length
-   private Point barrelEnd; // the endpoint of the cannon's barrel
-   private int screenWidth; // width of the screen
-   private int screenHeight; // height of the screen
+   private Point cannonball; 
+   private int cannonballVelocityX; 
+   private int cannonballVelocityY; 
+   private boolean cannonballOnScreen; 
+   private int cannonballRadius; 
+   private int cannonballSpeed; 
+   private int cannonBaseRadius; 
+   private int cannonLength; 
+   private Point barrelEnd; 
+   private int screenWidth; 
+   private int screenHeight; 
 
-   // constants and variables for managing sounds
    private static final int TARGET_SOUND_ID = 0;
    private static final int CANNON_SOUND_ID = 1;
    private static final int BLOCKER_SOUND_ID = 2;
-   private SoundPool soundPool; // plays sound effects
-   private Map<Integer, Integer> soundMap; // maps IDs to SoundPool
+   private SoundPool soundPool; 
+   private Map<Integer, Integer> soundMap; 
 
-   // Paint variables used when drawing each item on the screen
-   private Paint textPaint; // Paint used to draw text
-   private Paint cannonballPaint; // Paint used to draw the cannonball
-   private Paint cannonPaint; // Paint used to draw the cannon
-   private Paint blockerPaint; // Paint used to draw the blocker
-   private Paint targetPaint; // Paint used to draw the target
-   private Paint backgroundPaint; // Paint used to clear the drawing area
+   private Paint textPaint; 
+   private Paint cannonballPaint; 
+   private Paint cannonPaint; 
+   private Paint blockerPaint; 
+   private Paint targetPaint;
+   private Paint backgroundPaint; 
 
-   // public constructor
    @SuppressLint("UseSparseArrays")
 public CannonView(Context context, AttributeSet attrs)
    {
-      super(context, attrs); // call super's constructor
+      super(context, attrs); 
       activity = (Activity) context; 
       
       // register SurfaceHolder.Callback listener
       getHolder().addCallback(this); 
 
-      // initialize Lines and points representing game items
-      blocker = new Line(); // create the blocker as a Line
-      target = new Line(); // create the target as a Line
-      cannonball = new Point(); // create the cannonball as a point
+      blocker = new Line(); 
+      target = new Line(); 
+      cannonball = new Point(); 
 
-      // initialize hitStates as a boolean array
       hitStates = new boolean[TARGET_PIECES];
 
-      // initialize SoundPool to play the app's three sound effects
       soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
 
-      // create Map of sounds and pre-load sounds
-      soundMap = new HashMap<Integer, Integer>(); // create new HashMap
+      soundMap = new HashMap<Integer, Integer>(); 
       soundMap.put(TARGET_SOUND_ID,
          soundPool.load(context, R.raw.target_hit, 1));
       soundMap.put(CANNON_SOUND_ID,
@@ -122,76 +109,69 @@ public CannonView(Context context, AttributeSet attrs)
 
       // construct Paints for drawing text, cannonball, cannon,
       // blocker and target; these are configured in method onSizeChanged
-      textPaint = new Paint(); // Paint for drawing text
-      cannonPaint = new Paint(); // Paint for drawing the cannon
-      cannonballPaint = new Paint(); // Paint for drawing a cannonball
-      blockerPaint = new Paint(); // Paint for drawing the blocker
-      targetPaint = new Paint(); // Paint for drawing the target
-      backgroundPaint = new Paint(); // Paint for drawing the target
-   } // end CannonView constructor
+      textPaint = new Paint(); 
+      cannonPaint = new Paint(); 
+      cannonballPaint = new Paint();
+      blockerPaint = new Paint(); 
+      targetPaint = new Paint();
+      backgroundPaint = new Paint(); 
+   } 
 
-   // called by surfaceChanged when the size of the SurfaceView changes,
-   // such as when it's first added to the View hierarchy
    @Override
    protected void onSizeChanged(int w, int h, int oldw, int oldh)
    {
       super.onSizeChanged(w, h, oldw, oldh);
 
-      screenWidth = w; // store the width
-      screenHeight = h; // store the height
-      cannonBaseRadius = h / 18; // cannon base radius 1/18 screen height
-      cannonLength = w / 8; // cannon length 1/8 screen width
+      screenWidth = w; 
+      screenHeight = h;
+      cannonBaseRadius = h / 18; 
+      cannonLength = w / 8; 
 
-      cannonballRadius = w / 36; // cannonball radius 1/36 screen width
-      cannonballSpeed = w * 3 / 2; // cannonball speed multiplier
+      cannonballRadius = w / 36; 
+      cannonballSpeed = w * 3 / 2;
 
-      lineWidth = w / 24; // target and blocker 1/24 screen width
+      lineWidth = w / 24; 
 
-      // configure instance variables related to the blocker
-      blockerDistance = w * 5 / 8; // blocker 5/8 screen width from left
-      blockerBeginning = h / 8; // distance from top 1/8 screen height
-      blockerEnd = h * 3 / 8; // distance from top 3/8 screen height
-      initialBlockerVelocity = h / 2; // initial blocker speed multiplier
+      blockerDistance = w * 5 / 8; 
+      blockerBeginning = h / 8; 
+      blockerEnd = h * 3 / 8; 
+      initialBlockerVelocity = h / 2; 
       blocker.start = new Point(blockerDistance, blockerBeginning);
       blocker.end = new Point(blockerDistance, blockerEnd);
 
-      // configure instance variables related to the target
-      targetDistance = w * 7 / 8; // target 7/8 screen width from left
-      targetBeginning = h / 8; // distance from top 1/8 screen height
-      targetEnd = h * 7 / 8; // distance from top 7/8 screen height
+      targetDistance = w * 7 / 8;
+      targetBeginning = h / 8;
+      targetEnd = h * 7 / 8; 
       pieceLength = (targetEnd - targetBeginning) / TARGET_PIECES;
-      initialTargetVelocity = -h / 4; // initial target speed multiplier
+      initialTargetVelocity = -h / 4; 
       target.start = new Point(targetDistance, targetBeginning);
       target.end = new Point(targetDistance, targetEnd);
 
-      // endpoint of the cannon's barrel initially points horizontally
       barrelEnd = new Point(cannonLength, h / 2);
 
-      // configure Paint objects for drawing game elements
-      textPaint.setTextSize(w / 20); // text size 1/20 of screen width
-      textPaint.setAntiAlias(true); // smoothes the text
-      cannonPaint.setStrokeWidth(lineWidth * 1.5f); // set line thickness
-      blockerPaint.setStrokeWidth(lineWidth); // set line thickness      
-      targetPaint.setStrokeWidth(lineWidth); // set line thickness       
-      backgroundPaint.setColor(Color.WHITE); // set background color
+      textPaint.setTextSize(w / 20); 
+      textPaint.setAntiAlias(true); 
+      cannonPaint.setStrokeWidth(lineWidth * 1.5f); 
+      blockerPaint.setStrokeWidth(lineWidth);     
+      targetPaint.setStrokeWidth(lineWidth);     
+      backgroundPaint.setColor(Color.WHITE);
 
-      newGame(); // set up and start a new game
-   } // end method onSizeChanged
+      newGame(); 
+   } 
 
    // reset all the screen elements and start a new game
    public void newGame()
    {
-      // set every element of hitStates to false--restores target pieces
       for (int i = 0; i < TARGET_PIECES; ++i)
          hitStates[i] = false;
 
-      targetPiecesHit = 0; // no target pieces have been hit
-      blockerVelocity = initialBlockerVelocity; // set initial velocity
-      targetVelocity = initialTargetVelocity; // set initial velocity
-      timeLeft = 10; // start the countdown at 10 seconds
-      cannonballOnScreen = false; // the cannonball is not on the screen
-      shotsFired = 0; // set the initial number of shots fired
-      totalElapsedTime = 0.0; // set the time elapsed to zero
+      targetPiecesHit = 0; 
+      blockerVelocity = initialBlockerVelocity; 
+      targetVelocity = initialTargetVelocity; 
+      timeLeft = 10; 
+      cannonballOnScreen = false; 
+      shotsFired = 0; 
+      totalElapsedTime = 0.0; 
       blocker.start.set(blockerDistance, blockerBeginning);
       blocker.end.set(blockerDistance, blockerEnd);
       target.start.set(targetDistance, targetBeginning);
@@ -199,18 +179,18 @@ public CannonView(Context context, AttributeSet attrs)
       
       if (gameOver)
       {
-         gameOver = false; // the game is not over
+         gameOver = false; 
          cannonThread = new CannonThread(getHolder());
          cannonThread.start();
-      } // end if
-   } // end method newGame
+      } 
+   } 
 
    // called repeatedly by the CannonThread to update game elements
    private void updatePositions(double elapsedTimeMS)
    {
-      double interval = elapsedTimeMS / 1000.0; // convert to seconds
+      double interval = elapsedTimeMS / 1000.0;
 
-      if (cannonballOnScreen) // if there is currently a shot fired
+      if (cannonballOnScreen) 
       {
          // update cannonball position
          cannonball.x += interval * cannonballVelocityX;
@@ -222,22 +202,22 @@ public CannonView(Context context, AttributeSet attrs)
             cannonball.y + cannonballRadius > blocker.start.y &&
             cannonball.y - cannonballRadius < blocker.end.y)
          {
-            cannonballVelocityX *= -1; // reverse cannonball's direction
-            timeLeft -= MISS_PENALTY; // penalize the user
+            cannonballVelocityX *= -1; 
+            timeLeft -= MISS_PENALTY; 
 
-            // play blocker sound
+            
             soundPool.play(soundMap.get(BLOCKER_SOUND_ID), 1, 1, 1, 0, 1f);
-         } // end if
+         } 
 
          // check for collisions with left and right walls
          else if (cannonball.x + cannonballRadius > screenWidth || 
             cannonball.x - cannonballRadius < 0)
-            cannonballOnScreen = false; // remove cannonball from screen
+            cannonballOnScreen = false; 
 
          // check for collisions with top and bottom walls
          else if (cannonball.y + cannonballRadius > screenHeight || 
             cannonball.y - cannonballRadius < 0)
-            cannonballOnScreen = false; // make the cannonball disappear
+            cannonballOnScreen = false;
 
          // check for cannonball collision with target
          else if (cannonball.x + cannonballRadius > targetDistance && 
@@ -253,11 +233,10 @@ public CannonView(Context context, AttributeSet attrs)
             if ((section >= 0 && section < TARGET_PIECES) && 
                !hitStates[section])
             {
-               hitStates[section] = true; // section was hit
-               cannonballOnScreen = false; // remove cannonball
-               timeLeft += HIT_REWARD; // add reward to remaining time
-
-               // play target hit sound
+               hitStates[section] = true; 
+               cannonballOnScreen = false; 
+               timeLeft += HIT_REWARD; 
+               
                soundPool.play(soundMap.get(TARGET_SOUND_ID), 1,
                   1, 1, 0, 1f);
 
@@ -265,12 +244,12 @@ public CannonView(Context context, AttributeSet attrs)
                if (++targetPiecesHit == TARGET_PIECES)
                {
                   cannonThread.setRunning(false);
-                  showGameOverDialog(R.string.win); // show winning dialog
-                  gameOver = true; // the game is over
-               } // end if
-            } // end if
-         } // end else if
-      } // end if
+                  showGameOverDialog(R.string.win);
+                  gameOver = true; 
+               } 
+            } 
+         }
+      } 
 
       // update the blocker's position
       double blockerUpdate = interval * blockerVelocity;
@@ -290,23 +269,23 @@ public CannonView(Context context, AttributeSet attrs)
       if (target.start.y < 0 || target.end.y > screenHeight)
          targetVelocity *= -1;
 
-      timeLeft -= interval; // subtract from time left
+      timeLeft -= interval; 
 
-      // if the timer reached zero
+      
       if (timeLeft <= 0.0)
       {
          timeLeft = 0.0;
-         gameOver = true; // the game is over
+         gameOver = true; 
          cannonThread.setRunning(false);
-         showGameOverDialog(R.string.lose); // show the losing dialog
-      } // end if
-   } // end method updatePositions
+         showGameOverDialog(R.string.lose);
+      } 
+   } 
 
    // fires a cannonball
    public void fireCannonball(MotionEvent event)
    {
-      if (cannonballOnScreen) // if a cannonball is already on the screen
-         return; // do nothing
+      if (cannonballOnScreen) 
+         return; 
 
       double angle = alignCannon(event); // get the cannon barrel's angle
 
@@ -329,30 +308,26 @@ public CannonView(Context context, AttributeSet attrs)
    // aligns the cannon in response to a user touch
    public double alignCannon(MotionEvent event)
    {
-      // get the location of the touch in this view
       Point touchPoint = new Point((int) event.getX(), (int) event.getY());
 
-      // compute the touch's distance from center of the screen
-      // on the y-axis
       double centerMinusY = (screenHeight / 2 - touchPoint.y);
 
-      double angle = 0; // initialize angle to 0
+      double angle = 0; 
 
-      // calculate the angle the barrel makes with the horizontal
       if (centerMinusY != 0) // prevent division by 0
          angle = Math.atan((double) touchPoint.x / centerMinusY);
 
       // if the touch is on the lower half of the screen
       if (touchPoint.y > screenHeight / 2)
-         angle += Math.PI; // adjust the angle
-
+         angle += Math.PI; 
+      
       // calculate the endpoint of the cannon barrel
       barrelEnd.x = (int) (cannonLength * Math.sin(angle));
       barrelEnd.y = 
          (int) (-cannonLength * Math.cos(angle) + screenHeight / 2);
 
-      return angle; // return the computed angle
-   } // end method alignCannon
+      return angle; 
+   } 
 
    // draws the game to the given Canvas
    public void drawGameElements(Canvas canvas)
@@ -365,107 +340,95 @@ public CannonView(Context context, AttributeSet attrs)
       canvas.drawText(getResources().getString(
          R.string.time_remaining_format, timeLeft), 30, 50, textPaint);
 
-      // if a cannonball is currently on the screen, draw it
       if (cannonballOnScreen)
          canvas.drawCircle(cannonball.x, cannonball.y, cannonballRadius,
             cannonballPaint);
 
-      // draw the cannon barrel
       canvas.drawLine(0, screenHeight / 2, barrelEnd.x, barrelEnd.y,
          cannonPaint);
 
-      // draw the cannon base
       canvas.drawCircle(0, (int) screenHeight / 2,
          (int) cannonBaseRadius, cannonPaint);
 
-      // draw the blocker
       canvas.drawLine(blocker.start.x, blocker.start.y, blocker.end.x,
          blocker.end.y, blockerPaint);
 
-      Point currentPoint = new Point(); // start of current target section
+      Point currentPoint = new Point(); 
 
-      // initialize curPoint to the starting point of the target
       currentPoint.x = target.start.x;
       currentPoint.y = target.start.y;
 
-      // draw the target
       for (int i = 1; i <= TARGET_PIECES; ++i)
       {
-         // if this target piece is not hit, draw it
          if (!hitStates[i - 1])
          {
-            // alternate coloring the pieces yellow and blue
             if (i % 2 == 0)
-               targetPaint.setColor(Color.YELLOW);
+               targetPaint.setColor(Color.RED);
             else
-               targetPaint.setColor(Color.BLUE);
+               targetPaint.setColor(Color.GREEN);
             
             canvas.drawLine(currentPoint.x, currentPoint.y, target.end.x,
                (int) (currentPoint.y + pieceLength), targetPaint);
-         } // end if
+         } 
          
          // move curPoint to the start of the next piece
          currentPoint.y += pieceLength;
-      } // end for
-   } // end method drawGameElements
+      } 
+   } 
 
-   // display an AlertDialog when the game ends
    private void showGameOverDialog(int messageId)
    {
-      // create a dialog displaying the given String
       final AlertDialog.Builder dialogBuilder = 
          new AlertDialog.Builder(getContext());
       dialogBuilder.setTitle(getResources().getString(messageId));
       dialogBuilder.setCancelable(false);
 
-      // display number of shots fired and total time elapsed
       dialogBuilder.setMessage(getResources().getString(
          R.string.results_format, shotsFired, totalElapsedTime));
       dialogBuilder.setPositiveButton(R.string.reset_game,
          new DialogInterface.OnClickListener()
          {
-            // called when "Reset Game" Button is pressed
             @Override
             public void onClick(DialogInterface dialog, int which)
             {
                dialogIsDisplayed = false;
-               newGame(); // set up and start a new game
-            } // end method onClick
-         } // end anonymous inner class
-      ); // end call to setPositiveButton
+               newGame(); 
+            } 
+         } 
+      );
 
       activity.runOnUiThread(
          new Runnable() {
             public void run()
             {
                dialogIsDisplayed = true;
-               dialogBuilder.show(); // display the dialog
-            } // end method run
-         } // end Runnable
-      ); // end call to runOnUiThread
-   } // end method showGameOverDialog
+               dialogBuilder.show(); 
+            }
+         } 
+      ); 
+   } 
 
-   // stops the game
+  
    public void stopGame()
    {
       if (cannonThread != null)
          cannonThread.setRunning(false);
-   } // end method stopGame
+   } 
 
    // releases resources; called by CannonGame's onDestroy method 
    public void releaseResources()
    {
-      soundPool.release(); // release all resources used by the SoundPool
+      soundPool.release(); 
       soundPool = null; 
-   } // end method releaseResources
+   } 
 
    // called when surface changes size
    @Override
    public void surfaceChanged(SurfaceHolder holder, int format,
       int width, int height)
    {
-   } // end method surfaceChanged
-
+   }
+   
    // called when surface is first created
    @Override
    public void surfaceCreated(SurfaceHolder holder)
@@ -474,15 +437,15 @@ public CannonView(Context context, AttributeSet attrs)
       {
          cannonThread = new CannonThread(holder);
          cannonThread.setRunning(true);
-         cannonThread.start(); // start the game loop thread
-      } // end if
-   } // end method surfaceCreated
+         cannonThread.start(); 
+      } 
+   } 
 
    // called when the surface is destroyed
    @Override
    public void surfaceDestroyed(SurfaceHolder holder)
    {
-      // ensure that thread terminates properly
+      
       boolean retry = true;
       cannonThread.setRunning(false);
       
@@ -492,37 +455,35 @@ public CannonView(Context context, AttributeSet attrs)
          {
             cannonThread.join();
             retry = false;
-         } // end try
+         } 
          catch (InterruptedException e)
          {
-         } // end catch
-      } // end while
-   } // end method surfaceDestroyed
+         } 
+      } 
+   } 
    
    // Thread subclass to control the game loop
    private class CannonThread extends Thread
    {
       private SurfaceHolder surfaceHolder; // for manipulating canvas
-      private boolean threadIsRunning = true; // running by default
+      private boolean threadIsRunning = true; 
       
-      // initializes the surface holder
       public CannonThread(SurfaceHolder holder)
       {
          surfaceHolder = holder;
          setName("CannonThread");
-      } // end constructor
+      } 
       
-      // changes running state
       public void setRunning(boolean running)
       {
          threadIsRunning = running;
-      } // end method setRunning
+      } 
       
       // controls the game loop
       @Override
       public void run()
       {
-         Canvas canvas = null; // used for drawing
+         Canvas canvas = null; 
          long previousFrameTime = System.currentTimeMillis(); 
         
          while (threadIsRunning)
@@ -537,19 +498,18 @@ public CannonView(Context context, AttributeSet attrs)
                   long currentTime = System.currentTimeMillis();
                   double elapsedTimeMS = currentTime - previousFrameTime;
                   totalElapsedTime += elapsedTimeMS / 1000.00; 
-                  updatePositions(elapsedTimeMS); // update game state
-                  drawGameElements(canvas); // draw 
-                  previousFrameTime = currentTime; // update previous time
-               } // end synchronized block
-            } // end try
+                  updatePositions(elapsedTimeMS); 
+                  drawGameElements(canvas); 
+                  previousFrameTime = currentTime; 
+               } 
+            } 
             finally
             {
                if (canvas != null) 
                   surfaceHolder.unlockCanvasAndPost(canvas);
-            } // end finally
-         } // end while
-      } // end method run
-   } // end nested class CannonThread
-} // end class CannonView
-
+            } 
+         } 
+      }
+   } 
+} 
 
