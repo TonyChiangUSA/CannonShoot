@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+   <string name="app_name">Cannon Shoot</string>
+   <string name="results_format">
+      已经开火了: %1$d\n时间总计: %2$.1f</string>
+   <string name="reset_game">重置游戏</string>
+   <string name="win">你赢了!</string>
+   <string name="lose">你输了!</string>
+   <string name="time_remaining_format">
+        时间剩余: %.1f 秒</string>
+</resources>
